@@ -1,0 +1,53 @@
+
+{
+	"buildFiles" : 
+	[
+		"/home/shared/workspace/VectorFields3/app/src/main/cpp/CMakeLists.txt"
+	],
+	"cFileExtensions" : [ "c" ],
+	"cleanCommands" : 
+	[
+		"/home/shared/Android/Sdk/cmake/3.6.3155560/bin/cmake --build /home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/x86 --target clean"
+	],
+	"libraries" : 
+	{
+		"sanangeles-Debug-x86" : 
+		{
+			"abi" : "x86",
+			"artifactName" : "sanangeles",
+			"buildCommand" : "/home/shared/Android/Sdk/cmake/3.6.3155560/bin/cmake --build /home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/x86 --target sanangeles",
+			"buildType" : "debug",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-x86 -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/app-android.c",
+					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/x86"
+				},
+				
+				{
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-x86 -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/demo.c",
+					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/x86"
+				},
+				
+				{
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-x86 -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/importgl.c",
+					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/x86"
+				}
+			],
+			"output" : "/home/shared/workspace/VectorFields3/app/build/intermediates/cmake/debug/obj/x86/libsanangeles.so",
+			"toolchain" : "9400212437051827970"
+		}
+	},
+	"toolchains" : 
+	{
+		"9400212437051827970" : 
+		{
+			"cCompilerExecutable" : "/home/shared/Android/Sdk/ndk-bundle/toolchains/x86-4.9/prebuilt/linux-x86_64/bin/i686-linux-android-gcc",
+			"cppCompilerExecutable" : "/home/shared/Android/Sdk/ndk-bundle/toolchains/x86-4.9/prebuilt/linux-x86_64/bin/i686-linux-android-g++"
+		}
+	}
+}

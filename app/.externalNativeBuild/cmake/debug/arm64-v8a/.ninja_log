@@ -1,0 +1,9 @@
+# ninja log v5
+0	31	0	CMakeFiles/sanangeles.dir/importgl.c.o	b8d12d2955fcd355
+0	31	0	CMakeFiles/sanangeles.dir/app-android.c.o	9df7798cd7cade9c
+0	60	0	CMakeFiles/sanangeles.dir/demo.c.o	5ae9a2c003850546
+60	67	0	/home/shared/workspace/VectorFields3/app/build/intermediates/cmake/debug/obj/arm64-v8a/libsanangeles.so	e71f124fb63b23d6
+0	41	0	CMakeFiles/sanangeles.dir/importgl.c.o	b8d12d2955fcd355
+0	42	0	CMakeFiles/sanangeles.dir/app-android.c.o	9df7798cd7cade9c
+0	50	0	CMakeFiles/sanangeles.dir/demo.c.o	5ae9a2c003850546
+50	57	0	/home/shared/workspace/VectorFields3/app/build/intermediates/cmake/debug/obj/arm64-v8a/libsanangeles.so	e71f124fb63b23d6

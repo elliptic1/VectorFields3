@@ -1,0 +1,53 @@
+
+{
+	"buildFiles" : 
+	[
+		"/home/shared/workspace/VectorFields3/app/src/main/cpp/CMakeLists.txt"
+	],
+	"cFileExtensions" : [ "c" ],
+	"cleanCommands" : 
+	[
+		"/home/shared/Android/Sdk/cmake/3.6.3155560/bin/cmake --build /home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/mips --target clean"
+	],
+	"libraries" : 
+	{
+		"sanangeles-Debug-mips" : 
+		{
+			"abi" : "mips",
+			"artifactName" : "sanangeles",
+			"buildCommand" : "/home/shared/Android/Sdk/cmake/3.6.3155560/bin/cmake --build /home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/mips --target sanangeles",
+			"buildType" : "debug",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-mips -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/app-android.c",
+					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/mips"
+				},
+				
+				{
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-mips -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/demo.c",
+					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/mips"
+				},
+				
+				{
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-mips -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/importgl.c",
+					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/mips"
+				}
+			],
+			"output" : "/home/shared/workspace/VectorFields3/app/build/intermediates/cmake/debug/obj/mips/libsanangeles.so",
+			"toolchain" : "9290858355353659915"
+		}
+	},
+	"toolchains" : 
+	{
+		"9290858355353659915" : 
+		{
+			"cCompilerExecutable" : "/home/shared/Android/Sdk/ndk-bundle/toolchains/mipsel-linux-android-4.9/prebuilt/linux-x86_64/bin/mipsel-linux-android-gcc",
+			"cppCompilerExecutable" : "/home/shared/Android/Sdk/ndk-bundle/toolchains/mipsel-linux-android-4.9/prebuilt/linux-x86_64/bin/mipsel-linux-android-g++"
+		}
+	}
+}
