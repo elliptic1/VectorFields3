@@ -1,5 +1,5 @@
-/* San Angeles Observation OpenGL ES version example
- * Copyright 2009 The Android Open Source Project
+/* Vector Fields 3 Open Source
+ * Copyright 2016 Todd B Smith Enterprises LLC
  * All rights reserved.
  *
  * This source is free software; you can redistribute it and/or
@@ -25,45 +25,41 @@
 #include "importgl.h"
 #include "app.h"
 
-int   gAppAlive   = 1;
+int gAppAlive = 1;
 
-static int  sWindowWidth  = 320;
-static int  sWindowHeight = 480;
-static int  sDemoStopped  = 0;
-static long sTimeOffset   = 0;
-static int  sTimeOffsetInit = 0;
-static long sTimeStopped  = 0;
+static int sWindowWidth = 320;
+static int sWindowHeight = 480;
+static int sDemoStopped = 0;
+static long sTimeOffset = 0;
+static int sTimeOffsetInit = 0;
+static long sTimeStopped = 0;
 
 static long
-_getTime(void)
-{
-    struct timeval  now;
+_getTime(void) {
+    struct timeval now;
 
     gettimeofday(&now, NULL);
-    return (long)(now.tv_sec*1000 + now.tv_usec/1000);
+    return (long) (now.tv_sec * 1000 + now.tv_usec / 1000);
 }
 
 /* Call to initialize the graphics state */
 void
-Java_com_example_SanAngeles_DemoRenderer_nativeInit( JNIEnv*  env )
-{
+Java_com_tbse_vectorfields3_DemoRenderer_nativeInit(JNIEnv *env) {
     importGLInit();
     appInit();
-    gAppAlive  = 1;
+    gAppAlive = 1;
 }
 
 void
-Java_com_example_SanAngeles_DemoRenderer_nativeResize( JNIEnv*  env, jobject  thiz, jint w, jint h )
-{
-    sWindowWidth  = w;
+Java_com_tbse_vectorfields3_DemoRenderer_nativeResize(JNIEnv *env, jobject thiz, jint w, jint h) {
+    sWindowWidth = w;
     sWindowHeight = h;
     __android_log_print(ANDROID_LOG_INFO, "SanAngeles", "resize w=%d h=%d", w, h);
 }
 
 /* Call to finalize the graphics state */
 void
-Java_com_example_SanAngeles_DemoRenderer_nativeDone( JNIEnv*  env )
-{
+Java_com_tbse_vectorfields3_DemoRenderer_nativeDone(JNIEnv *env) {
     appDeinit();
     importGLDeinit();
 }
@@ -72,26 +68,23 @@ Java_com_example_SanAngeles_DemoRenderer_nativeDone( JNIEnv*  env )
  * stop as soon as possible.
  */
 
-void _pause()
-{
-  /* we paused the animation, so store the current
-   * time in sTimeStopped for future nativeRender calls */
+void _pause() {
+    /* we paused the animation, so store the current
+     * time in sTimeStopped for future nativeRender calls */
     sDemoStopped = 1;
     sTimeStopped = _getTime();
 }
 
-void _resume()
-{
-  /* we resumed the animation, so adjust the time offset
-   * to take care of the pause interval. */
+void _resume() {
+    /* we resumed the animation, so adjust the time offset
+     * to take care of the pause interval. */
     sDemoStopped = 0;
     sTimeOffset -= _getTime() - sTimeStopped;
 }
 
 
 void
-Java_com_example_SanAngeles_DemoGLSurfaceView_nativeTogglePauseResume( JNIEnv*  env )
-{
+Java_com_tbse_vectorfields3_DemoGLSurfaceView_nativeTogglePauseResume(JNIEnv *env) {
     sDemoStopped = !sDemoStopped;
     if (sDemoStopped)
         _pause();
@@ -100,22 +93,19 @@ Java_com_example_SanAngeles_DemoGLSurfaceView_nativeTogglePauseResume( JNIEnv*  
 }
 
 void
-Java_com_example_SanAngeles_DemoGLSurfaceView_nativePause( JNIEnv*  env )
-{
+Java_com_tbse_vectorfields3_DemoGLSurfaceView_nativePause(JNIEnv *env) {
     _pause();
 }
 
 void
-Java_com_example_SanAngeles_DemoGLSurfaceView_nativeResume( JNIEnv*  env )
-{
+Java_com_tbse_vectorfields3_DemoGLSurfaceView_nativeResume(JNIEnv *env) {
     _resume();
 }
 
 /* Call to render the next GL frame */
 void
-Java_com_example_SanAngeles_DemoRenderer_nativeRender( JNIEnv*  env )
-{
-    long   curTime;
+Java_com_tbse_vectorfields3_DemoRenderer_nativeRender(JNIEnv *env) {
+    long curTime;
 
     /* NOTE: if sDemoStopped is TRUE, then we re-render the same frame
      *       on each iteration.
@@ -126,12 +116,21 @@ Java_com_example_SanAngeles_DemoRenderer_nativeRender( JNIEnv*  env )
         curTime = _getTime() + sTimeOffset;
         if (sTimeOffsetInit == 0) {
             sTimeOffsetInit = 1;
-            sTimeOffset     = -curTime;
-            curTime         = 0;
+            sTimeOffset = -curTime;
+            curTime = 0;
         }
     }
 
-    //__android_log_print(ANDROID_LOG_INFO, "SanAngeles", "curTime=%ld", curTime);
+    //__android_log_print(ANDROID_LOG_INFO, "VF3", "curTime=%ld", curTime);
 
     appRender(curTime, sWindowWidth, sWindowHeight);
+}
+
+JNIEXPORT void JNICALL
+Java_com_tbse_vectorfields3_DemoGLSurfaceView_nativeTouchEvent(JNIEnv *env, jclass type,
+                                                               jfloat x, jfloat y) {
+
+    // TODO
+    __android_log_print(ANDROID_LOG_INFO, "vf", "curTime=%ld, x=%fd, y=%fd", _getTime(), x, y);
+
 }

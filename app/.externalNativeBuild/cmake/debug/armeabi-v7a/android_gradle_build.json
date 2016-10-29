@@ -21,19 +21,19 @@
 			[
 				
 				{
-					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-arm -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-arm -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
 					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/app-android.c",
 					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/armeabi-v7a"
 				},
 				
 				{
-					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-arm -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-arm -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
 					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/demo.c",
 					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/armeabi-v7a"
 				},
 				
 				{
-					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-arm -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0 -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
+					"flags" : "  --sysroot=/home/shared/Android/Sdk/ndk-bundle/platforms/android-9/arch-arm -Dsanangeles_EXPORTS  -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -Wall -Werror -O0  -fPIC   -DANDROID_NDK -DDISABLE_IMPORTGL    -c ",
 					"src" : "/home/shared/workspace/VectorFields3/app/src/main/cpp/importgl.c",
 					"workingDirectory" : "/home/shared/workspace/VectorFields3/app/.externalNativeBuild/cmake/debug/armeabi-v7a"
 				}

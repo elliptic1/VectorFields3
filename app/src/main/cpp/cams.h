@@ -29,7 +29,7 @@
 /* Length in milliseconds of one camera track base unit.
  * The value originates from the music synchronization.
  */
-#define CAMTRACK_LEN    5442
+#define CAMTRACK_LEN    54420
 
 
 // Camera track definition for one camera trucking shot.
@@ -51,7 +51,7 @@ static CAMTRACK sCamTracks[] =
     { { 1800, 3609, 200, 0, 675 }, { 0, 0, 0, 300, 0 }, 0, 1 },
     { { 923, 996, 50, 2336, -80 }, { 0, -20, -50, 0, 170 }, 0, 1 },
     { { -1663, -43, 600, 2170, 0 }, { 20, 0, -600, 0, 100 }, 0, 1 },
-    { { 1049, -1420, 175, 2111, -17 }, { 0, 0, 0, -334, 0 }, 0, 2 },
+    { { 1049, -1420, 175, 2111, -17 }, { 0, 0, 0, -334, 0 }, 180, 5 }, // 6
     { { 0, 0, 50, 300, 25 }, { 0, 0, 0, 300, 0 }, 70, 2 },
     { { -473, -953, 3500, -353, -350 }, { 0, 0, -2800, 0, 0 }, 0, 2 },
     { { 191, 1938, 35, 1139, -17 }, { 1205, -2909, 0, 0, 0 }, 0, 2 },
