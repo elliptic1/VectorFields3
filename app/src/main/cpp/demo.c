@@ -21,10 +21,8 @@
  * $Id: demo.c,v 1.10 2005/02/08 20:54:39 tonic Exp $
  * $Revision: 1.10 $
  */
-
 #include <stdlib.h>
 #include <math.h>
-#include <float.h>
 #include <assert.h>
 
 #include "importgl.h"
@@ -33,13 +31,15 @@
 #include "shapes.h"
 #include "cams.h"
 
+#include <android/log.h>
 
 // Total run length is 20 * camera track base unit length (see cams.h).
 #define RUN_LENGTH  (20 * CAMTRACK_LEN)
 #undef PI
 #define PI 3.1415926535897932f
-#define ONEOVERRADICAL2 0.070710678118f
-#define RANDOM_UINT_MAX 65535
+#define NUMBOXES 10
+#define ONE_OVER_RADICAL_2 0.070710678118f
+//#define RANDOM_UINT_MAX 65535
 
 
 static unsigned long sRandomSeed = 0;
@@ -93,7 +93,7 @@ static long sNextCamTrackStartTick = 0x7fffffff;
 
 static GLOBJECT *sSuperShapeObjects[SUPERSHAPE_COUNT] = {NULL};
 static GLOBJECT *sGroundPlane = NULL;
-static GLOBJECT *sXAxis = NULL;
+static GLOBJECT *sBoxes[NUMBOXES];
 
 
 typedef struct {
@@ -171,6 +171,7 @@ static void superShapeMap(VECTOR3 *point, float r1, float r2, float t, float p) 
     point->x = (float) (cos(t) * cos(p) / r1 / r2);
     point->y = (float) (sin(t) * cos(p) / r1 / r2);
     point->z = (float) (sin(p) / r2);
+
 }
 
 
@@ -324,93 +325,81 @@ static GLOBJECT *createSuperShape(const float *params) {
     return result;
 }
 
-static GLOBJECT *createPlane(int x1, int y1, int z1, int nx, int ny, int nz) {
-    int numTriangles = 2;
-    int numVertices = numTriangles * 3;
-    GLOBJECT *plane = newGLObject(numVertices, 3, 0);
+static void assignVertex(int pi, int m, GLOBJECT *result, long p[][3]) {
+    int i;
+    GLubyte color;
+    for (i = 0; i < 3; i++) {
+        __android_log_print(ANDROID_LOG_DEBUG, "vf", "vertex[%d] = %d", m * 3 + i,
+                            (int) p[pi - 1][i]);
+        result->vertexArray[m * 3 + i] = (GLfixed) p[pi - 1][i];
 
-    if (nx != 0 && ny == 0 && nz == 0) {
+        int j;
+        for (j = 0; j < 4; j++) {
+            color = (GLubyte) (j == 3 ? 0 : (GLubyte) ((randomUInt() & 0x5f) + 10 * m + j));
+            result->colorArray[(m * 3 + i) * 4 + j] = color;
+//            __android_log_print(ANDROID_LOG_DEBUG, "vf",
+//                                "color[%d] = %d", (m * 3 + i) * 4 + j, color);
+        }
+    }
+}
 
-        plane->vertexArray[0] = (GLfixed) FIXED(x1);
-        plane->vertexArray[1] = (GLfixed) FIXED(y1);
-        plane->vertexArray[2] = (GLfixed) FIXED(z1);
+static void assignNormal(int pi, GLOBJECT *result) {
+    int i;
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "assign normal to triangle %d", pi/3+1);
+    VECTOR3 r1, r2, r3, v1, v2, n;
 
-        plane->vertexArray[3] = (GLfixed) FIXED(x1);
-        plane->vertexArray[4] = (GLfixed) FIXED(y1 + ONEOVERRADICAL2);
-        plane->vertexArray[5] = (GLfixed) FIXED(z1);
+    r1.x = result->vertexArray[pi * 3];
+    r1.y = result->vertexArray[pi * 3 + 1];
+    r1.z = result->vertexArray[pi * 3 + 2];
 
-        plane->vertexArray[6] = (GLfixed) FIXED(x1);
-        plane->vertexArray[7] = (GLfixed) FIXED(y1 + ONEOVERRADICAL2);
-        plane->vertexArray[8] = (GLfixed) FIXED(z1 + ONEOVERRADICAL2);
+    r2.x = result->vertexArray[pi * 3 + 3];
+    r2.y = result->vertexArray[pi * 3 + 4];
+    r2.z = result->vertexArray[pi * 3 + 5];
 
-    } else if (nx == 0 && ny != 0 && nz == 0) {
+    r3.x = result->vertexArray[pi * 3 + 6];
+    r3.y = result->vertexArray[pi * 3 + 7];
+    r3.z = result->vertexArray[pi * 3 + 8];
 
-        plane->vertexArray[0] = (GLfixed) FIXED(x1);
-        plane->vertexArray[1] = (GLfixed) FIXED(y1);
-        plane->vertexArray[2] = (GLfixed) FIXED(z1);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r1 = (%2.2f, %2.2f, %2.2f)",
+//                        r1.x, r1.y, r1.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r2 = (%2.2f, %2.2f, %2.2f)",
+//                        r2.x, r2.y, r2.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r3 = (%2.2f, %2.2f, %2.2f)",
+//                        r3.x, r3.y, r3.z);
 
-        plane->vertexArray[3] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[4] = (GLfixed) FIXED(y1);
-        plane->vertexArray[5] = (GLfixed) FIXED(z1);
+    vector3Sub(&v1, &r2, &r1);
+    vector3Sub(&v2, &r3, &r2);
 
-        plane->vertexArray[6] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[7] = (GLfixed) FIXED(y1);
-        plane->vertexArray[8] = (GLfixed) FIXED(z1 + ONEOVERRADICAL2);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "v1 = (%2.2f, %2.2f, %2.2f)",
+//                        v1.x, v1.y, v1.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "v2 = (%2.2f, %2.2f, %2.2f)",
+//                        v2.x, v2.y, v2.z);
+//
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.x = %2.2f * %2.2f - %2.2f * %2.2f",
+//                        v1.y, v2.z, v1.z, v2.y);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.y = %2.2f * %2.2f - %2.2f * %2.2f",
+//                        v1.z, v2.x, v1.x, v2.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.z = %2.2f * %2.2f - %2.2f * %2.2f",
+//                        v1.x, v2.y, v1.y, v2.x);
 
-    } else if (nx == 0 && ny == 0 && nz != 0) {
+    n.x = v1.y * v2.z - v1.z * v2.y;
+    n.y = v1.z * v2.x - v1.x * v2.z;
+    n.z = v1.x * v2.y - v1.y * v2.x;
 
-        plane->vertexArray[0] = (GLfixed) FIXED(x1);
-        plane->vertexArray[1] = (GLfixed) FIXED(y1);
-        plane->vertexArray[2] = (GLfixed) FIXED(z1);
-
-        plane->vertexArray[3] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[4] = (GLfixed) FIXED(y1);
-        plane->vertexArray[5] = (GLfixed) FIXED(z1);
-
-        plane->vertexArray[6] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[7] = (GLfixed) FIXED(y1 + ONEOVERRADICAL2);
-        plane->vertexArray[8] = (GLfixed) FIXED(z1);
-
-    } else if (nx != 0 && ny != 0 && nz == 0) {
-
-        plane->vertexArray[0] = (GLfixed) FIXED(x1);
-        plane->vertexArray[1] = (GLfixed) FIXED(y1);
-        plane->vertexArray[2] = (GLfixed) FIXED(z1);
-
-        plane->vertexArray[0] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[1] = (GLfixed) FIXED(y1);
-        plane->vertexArray[2] = (GLfixed) FIXED(z1);
-
-        plane->vertexArray[0] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[1] = (GLfixed) FIXED(y1 + ONEOVERRADICAL2);
-        plane->vertexArray[2] = (GLfixed) FIXED(z1);
-
-    } else if (nx != 0 && ny == 0 && nz != 0) {
-
-        plane->vertexArray[0] = (GLfixed) FIXED(x1);
-        plane->vertexArray[1] = (GLfixed) FIXED(y1);
-        plane->vertexArray[2] = (GLfixed) FIXED(z1);
-
-        plane->vertexArray[3] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[4] = (GLfixed) FIXED(y1);
-        plane->vertexArray[5] = (GLfixed) FIXED(z1);
-
-        plane->vertexArray[6] = (GLfixed) FIXED(x1 + ONEOVERRADICAL2);
-        plane->vertexArray[7] = (GLfixed) FIXED(y1);
-        plane->vertexArray[8] = (GLfixed) FIXED(z1 + ONEOVERRADICAL2);
-
-    } else if (nx == 0 && ny != 0 && nz != 0) {
-
-        plane->vertexArray[0] = (GLfixed) FIXED(x1);
-
-    } else if (nx != 0 && ny != 0 && nz != 0) {
-
-        plane->vertexArray[0] = (GLfixed) FIXED(x1);
-
+    float mag = (float) sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
+    if (mag) {
+        n.x /= mag;
+        n.y /= mag;
+        n.z /= mag;
     }
 
-    return plane;
+    float nvector[3] = {n.x, n.y, n.z};
 
+    for (i = 0; i < 3; i++) {
+        result->normalArray[pi * 3 + i] = (GLfixed) nvector[i];
+    }
+    __android_log_print(ANDROID_LOG_DEBUG, "vf", "normal for triangle %d = (%2.2f, %2.2f, %2.2f)",
+                        pi / 3 + 1, nvector[0], nvector[1], nvector[2]);
 }
 
 static GLOBJECT *createBox(long x, long y, long z, long w, long l, long h) {
@@ -418,36 +407,85 @@ static GLOBJECT *createBox(long x, long y, long z, long w, long l, long h) {
     const long vertices = triangleCount * 3;
     GLOBJECT *result;
 
-    GLubyte color;
-    color = (GLubyte) ((randomUInt() & 0x5f) + 81);  // 101 1111
-
     long p[8][3] = {{x,     y,     z},
                     {x + w, y,     z},
                     {x + w, y + l, z},
-                    {x,     y + h, z},
+                    {x,     y + l, z},
                     {x,     y,     z + h},
                     {x + w, y,     z + h},
                     {x + w, y + l, z + h},
                     {x,     y + l, z + h}};
 
-    result = newGLObject(vertices, 3, 0);
+    result = newGLObject(vertices, 3, 1);
 
-    int i, j;
-    for (j = 0; j < 3; j++) {
-        for (i = 0; i < 8; i++) {
-            result->vertexArray[i + j * 8] = (int) p[j][(i + j * 8) % 3];
-            result->colorArray[i + j * 8] = color;
-        }
-    }
+    assignVertex(1, 0, result, p);
+    assignVertex(2, 1, result, p);
+    assignVertex(6, 2, result, p);
+    assignNormal(0, result);
+
+    assignVertex(6, 3, result, p);
+    assignVertex(5, 4, result, p);
+    assignVertex(1, 5, result, p);
+    assignNormal(3, result);
+
+    assignVertex(2, 6, result, p);
+    assignVertex(3, 7, result, p);
+    assignVertex(7, 8, result, p);
+    assignNormal(6, result);
+
+    assignVertex(7, 9, result, p);
+    assignVertex(6, 10, result, p);
+    assignVertex(2, 11, result, p);
+    assignNormal(9, result);
+
+    assignVertex(3, 12, result, p);
+    assignVertex(4, 13, result, p);
+    assignVertex(8, 14, result, p);
+    assignNormal(12, result);
+
+    assignVertex(8, 15, result, p);
+    assignVertex(7, 16, result, p);
+    assignVertex(3, 17, result, p);
+    assignNormal(15, result);
+
+    assignVertex(4, 18, result, p);
+    assignVertex(1, 19, result, p);
+    assignVertex(5, 20, result, p);
+    assignNormal(18, result);
+
+    assignVertex(5, 21, result, p);
+    assignVertex(8, 22, result, p);
+    assignVertex(4, 23, result, p);
+    assignNormal(21, result);
+
+    assignVertex(5, 24, result, p);
+    assignVertex(6, 25, result, p);
+    assignVertex(7, 26, result, p);
+    assignNormal(24, result);
+
+    assignVertex(7, 27, result, p);
+    assignVertex(8, 28, result, p);
+    assignVertex(5, 29, result, p);
+    assignNormal(27, result);
+
+    assignVertex(2, 30, result, p);
+    assignVertex(1, 31, result, p);
+    assignVertex(4, 32, result, p);
+    assignNormal(30, result);
+
+    assignVertex(4, 33, result, p);
+    assignVertex(3, 34, result, p);
+    assignVertex(2, 35, result, p);
+    assignNormal(33, result);
 
     return result;
 
 }
 
 static GLOBJECT *createGroundPlane() {
-    const int scale = 4;
-    const int yBegin = -15, yEnd = 15;    // ends are non-inclusive
-    const int xBegin = -15, xEnd = 15;
+    const int scale = 1;
+    const int yBegin = -3, yEnd = 3;    // ends are non-inclusive
+    const int xBegin = -3, xEnd = 3;
     const long triangleCount = (yEnd - yBegin) * (xEnd - xBegin) * 2;
     const long vertices = triangleCount * 3;
     GLOBJECT *result;
@@ -508,14 +546,14 @@ static void drawGroundPlane() {
 }
 
 
-static void drawXAxis() {
+static void drawBox(int i) {
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ZERO, GL_SRC_COLOR);
     glDisable(GL_LIGHTING);
 
-    drawGLObject(sXAxis);
+    drawGLObject(sBoxes[i]);
 
     glEnable(GL_LIGHTING);
     glDisable(GL_BLEND);
@@ -591,11 +629,15 @@ void appInit() {
         sSuperShapeObjects[a] = createSuperShape(sSuperShapeParams[a]);
         assert(sSuperShapeObjects[a] != NULL);
     }
+
     sGroundPlane = createGroundPlane();
     assert(sGroundPlane != NULL);
 
-    sXAxis = createBox(0, 0, 0, 1000, 2100, 800);
-    assert(sXAxis != NULL);
+    int i;
+    for (i = 0; i < NUMBOXES; i++) {
+        sBoxes[i] = createBox(10 * i, i, i, 10, 20, 10);
+        assert(sBoxes[i] != NULL);
+    }
 }
 
 
@@ -663,51 +705,51 @@ static void configureLightAndMaterial() {
 }
 
 
-static void drawModels(float zScale) {
-    const int translationScale = 9;
-    int x, y;
-
-    seedRandom(9);
-
-    glScalex(1 << 16, 1 << 16, (GLfixed) (zScale * 65536));
-
-    for (y = -5; y <= 5; ++y) {
-        for (x = -5; x <= 5; ++x) {
-            float buildingScale;
-            GLfixed fixedScale;
-
-            int curShape = (int) (randomUInt() % SUPERSHAPE_COUNT);
-            buildingScale = sSuperShapeParams[curShape][SUPERSHAPE_PARAMS - 1];
-            fixedScale = (GLfixed) (buildingScale * 65536);
-
-            glPushMatrix();
-            glTranslatex((x * translationScale) * 65536,
-                         (y * translationScale) * 65536,
-                         0);
-            glRotatex((GLfixed) ((randomUInt() % 360) << 16), 0, 0, 1 << 16);
-            glScalex(fixedScale, fixedScale, fixedScale);
-
-            drawGLObject(sSuperShapeObjects[curShape]);
-            glPopMatrix();
-        }
-    }
-
-    for (x = -2; x <= 2; ++x) {
-        const int shipScale100 = translationScale * 500;
-        const int offs100 = (const int) (x * shipScale100 + (sTick % shipScale100));
-        float offs = offs100 * 0.01f;
-        GLfixed fixedOffs = (GLfixed) (offs * 65536);
-        glPushMatrix();
-        glTranslatex(fixedOffs, -4 * 65536, 2 << 16);
-        drawGLObject(sSuperShapeObjects[SUPERSHAPE_COUNT - 1]);
-        glPopMatrix();
-        glPushMatrix();
-        glTranslatex(-4 * 65536, fixedOffs, 4 << 16);
-        glRotatex(90 << 16, 0, 0, 1 << 16);
-        drawGLObject(sSuperShapeObjects[SUPERSHAPE_COUNT - 1]);
-        glPopMatrix();
-    }
-}
+//static void drawModels(float zScale) {
+//    const int translationScale = 9;
+//    int x, y;
+//
+//    seedRandom(9);
+//
+//    glScalex(1 << 16, 1 << 16, (GLfixed) (zScale * 65536));
+//
+//    for (y = -5; y <= 5; ++y) {
+//        for (x = -5; x <= 5; ++x) {
+//            float buildingScale;
+//            GLfixed fixedScale;
+//
+//            int curShape = (int) (randomUInt() % SUPERSHAPE_COUNT);
+//            buildingScale = sSuperShapeParams[curShape][SUPERSHAPE_PARAMS - 1];
+//            fixedScale = (GLfixed) (buildingScale * 65536);
+//
+//            glPushMatrix();
+//            glTranslatex((x * translationScale) * 65536,
+//                         (y * translationScale) * 65536,
+//                         0);
+//            glRotatex((GLfixed) ((randomUInt() % 360) << 16), 0, 0, 1 << 16);
+//            glScalex(fixedScale, fixedScale, fixedScale);
+//
+//            drawGLObject(sSuperShapeObjects[curShape]);
+//            glPopMatrix();
+//        }
+//    }
+//
+//    for (x = -2; x <= 2; ++x) {
+//        const int shipScale100 = translationScale * 500;
+//        const int offs100 = (const int) (x * shipScale100 + (sTick % shipScale100));
+//        float offs = offs100 * 0.01f;
+//        GLfixed fixedOffs = (GLfixed) (offs * 65536);
+//        glPushMatrix();
+//        glTranslatex(fixedOffs, -4 * 65536, 2 << 16);
+//        drawGLObject(sSuperShapeObjects[SUPERSHAPE_COUNT - 1]);
+//        glPopMatrix();
+//        glPushMatrix();
+//        glTranslatex(-4 * 65536, fixedOffs, 4 << 16);
+//        glRotatex(90 << 16, 0, 0, 1 << 16);
+//        drawGLObject(sSuperShapeObjects[SUPERSHAPE_COUNT - 1]);
+//        glPopMatrix();
+//    }
+//}
 
 
 /* Following gluLookAt implementation is adapted from the
@@ -875,21 +917,22 @@ void appRender(long tick, int width, int height) {
 
     // Draw the reflection by drawing models with negated Z-axis.
     glPushMatrix();
-    drawModels(-1);
+//    drawModels(-1);
     glPopMatrix();
 
     // Blend the ground plane to the window.
     drawGroundPlane();
 
-    // Create the x-axis.
-    drawXAxis();
+    // Create the box.
+    int i;
+    for (i = 0; i < NUMBOXES; i++) {
+        drawBox(i);
+    }
 
     // Draw all the models normally.
-    drawModels(1.0);
+//    drawModels(1.0);
 
     // Draw fade quad over whole window (when changing cameras).
     drawFadeQuad();
 
-    createBox(1, 2, 3, 1000, 400, 600);
-    createPlane(1, 2, 3, 4, 5, 6);
 }

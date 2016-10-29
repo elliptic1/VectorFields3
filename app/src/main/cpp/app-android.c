@@ -54,7 +54,7 @@ void
 Java_com_tbse_vectorfields3_DemoRenderer_nativeResize(JNIEnv *env, jobject thiz, jint w, jint h) {
     sWindowWidth = w;
     sWindowHeight = h;
-    __android_log_print(ANDROID_LOG_INFO, "SanAngeles", "resize w=%d h=%d", w, h);
+    __android_log_print(ANDROID_LOG_INFO, "vf", "resize w=%d h=%d", w, h);
 }
 
 /* Call to finalize the graphics state */
