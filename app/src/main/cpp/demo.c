@@ -37,7 +37,7 @@
 #define RUN_LENGTH  (20 * CAMTRACK_LEN)
 #undef PI
 #define PI 3.1415926535897932f
-#define NUMBOXES 10
+#define NUMBOXES 1
 #define ONE_OVER_RADICAL_2 0.070710678118f
 //#define RANDOM_UINT_MAX 65535
 
@@ -87,9 +87,9 @@ typedef struct {
 static long sStartTick = 0;
 static long sTick = 0;
 
-static int sCurrentCamTrack = 0;
-static long sCurrentCamTrackStartTick = 0;
-static long sNextCamTrackStartTick = 0x7fffffff;
+//static int sCurrentCamTrack = 0;
+//static long sCurrentCamTrackStartTick = 0;
+//static long sNextCamTrackStartTick = 0x7fffffff;
 
 static GLOBJECT *sSuperShapeObjects[SUPERSHAPE_COUNT] = {NULL};
 static GLOBJECT *sGroundPlane = NULL;
@@ -145,9 +145,9 @@ static void drawGLObject(GLOBJECT *object) {
                     0, object->vertexArray);
     glColorPointer(4, GL_UNSIGNED_BYTE, 0, object->colorArray);
 
-    // Already done in initialization:
-    //glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_COLOR_ARRAY);
+//     Already done in initialization:
+//    glEnableClientState(GL_VERTEX_ARRAY);
+//    glEnableClientState(GL_COLOR_ARRAY);
 
     if (object->normalArray) {
         glNormalPointer(GL_FIXED, 0, object->normalArray);
@@ -166,179 +166,181 @@ static void vector3Sub(VECTOR3 *dest, VECTOR3 *v1, VECTOR3 *v2) {
 }
 
 
-static void superShapeMap(VECTOR3 *point, float r1, float r2, float t, float p) {
-    // sphere-mapping of supershape parameters
-    point->x = (float) (cos(t) * cos(p) / r1 / r2);
-    point->y = (float) (sin(t) * cos(p) / r1 / r2);
-    point->z = (float) (sin(p) / r2);
+//static void superShapeMap(VECTOR3 *point, float r1, float r2, float t, float p) {
+//    // sphere-mapping of supershape parameters
+//    point->x = (float) (cos(t) * cos(p) / r1 / r2);
+//    point->y = (float) (sin(t) * cos(p) / r1 / r2);
+//    point->z = (float) (sin(p) / r2);
+//
+//}
 
-}
 
-
-static float ssFunc(const float t, const float *p) {
-    return (float) (pow(pow(fabs(cos(p[0] * t / 4)) / p[1], p[4]) +
-                        pow(fabs(sin(p[0] * t / 4)) / p[2], p[5]), 1 / p[3]));
-}
+//static float ssFunc(const float t, const float *p) {
+//    return (float) (pow(pow(fabs(cos(p[0] * t / 4)) / p[1], p[4]) +
+//                        pow(fabs(sin(p[0] * t / 4)) / p[2], p[5]), 1 / p[3]));
+//}
 
 
 // Creates and returns a supershape object.
 // Based on Paul Bourke's POV-Ray implementation.
 // http://astronomy.swin.edu.au/~pbourke/povray/supershape/
-static GLOBJECT *createSuperShape(const float *params) {
-    const int resol1 = (int) params[SUPERSHAPE_PARAMS - 3];
-    const int resol2 = (int) params[SUPERSHAPE_PARAMS - 2];
-    // latitude 0 to pi/2 for no mirrored bottom
-    // (latitudeBegin==0 for -pi/2 to pi/2 originally)
-    const int latitudeBegin = resol2 / 4;
-    const int latitudeEnd = resol2 / 2;    // non-inclusive
-    const int longitudeCount = resol1;
-    const int latitudeCount = latitudeEnd - latitudeBegin;
-    const long triangleCount = longitudeCount * latitudeCount * 2;
-    const long vertices = triangleCount * 3;
-    GLOBJECT *result;
-    float baseColor[3];
-    int a, longitude, latitude;
-    long currentVertex, currentQuad;
-
-    result = newGLObject(vertices, 3, 1);
-    if (result == NULL)
-        return NULL;
-
-    for (a = 0; a < 3; ++a)
-        baseColor[a] = ((randomUInt() % 155) + 100) / 255.f;
-
-    currentQuad = 0;
-    currentVertex = 0;
-
-    // longitude -pi to pi
-    for (longitude = 0; longitude < longitudeCount; ++longitude) {
-
-        // latitude 0 to pi/2
-        for (latitude = latitudeBegin; latitude < latitudeEnd; ++latitude) {
-            float t1 = -PI + longitude * 2 * PI / resol1;
-            float t2 = -PI + (longitude + 1) * 2 * PI / resol1;
-            float p1 = -PI / 2 + latitude * 2 * PI / resol2;
-            float p2 = -PI / 2 + (latitude + 1) * 2 * PI / resol2;
-            float r0, r1, r2, r3;
-
-            r0 = ssFunc(t1, params);
-            r1 = ssFunc(p1, &params[6]);
-            r2 = ssFunc(t2, params);
-            r3 = ssFunc(p2, &params[6]);
-
-            if (r0 != 0 && r1 != 0 && r2 != 0 && r3 != 0) {
-                VECTOR3 pa, pb, pc, pd;
-                VECTOR3 v1, v2, n;
-                float ca;
-                int i;
-                //float lenSq, invLenSq;
-
-                superShapeMap(&pa, r0, r1, t1, p1);
-                superShapeMap(&pb, r2, r1, t2, p1);
-                superShapeMap(&pc, r2, r3, t2, p2);
-                superShapeMap(&pd, r0, r3, t1, p2);
-
-                // kludge to set lower edge of the object to fixed level
-                if (latitude == latitudeBegin + 1)
-                    pa.z = pb.z = 0;
-
-                vector3Sub(&v1, &pb, &pa);
-                vector3Sub(&v2, &pd, &pa);
-
-                // Calculate normal with cross product.
-                /*   i    j    k      i    j
-                 * v1.x v1.y v1.z | v1.x v1.y
-                 * v2.x v2.y v2.z | v2.x v2.y
-                 */
-
-                n.x = v1.y * v2.z - v1.z * v2.y;
-                n.y = v1.z * v2.x - v1.x * v2.z;
-                n.z = v1.x * v2.y - v1.y * v2.x;
-
-                /* Pre-normalization of the normals is disabled here because
-                 * they will be normalized anyway later due to automatic
-                 * normalization (GL_NORMALIZE). It is enabled because the
-                 * objects are scaled with glScale.
-                 */
-                /*
-                lenSq = n.x * n.x + n.y * n.y + n.z * n.z;
-                invLenSq = (float)(1 / sqrt(lenSq));
-                n.x *= invLenSq;
-                n.y *= invLenSq;
-                n.z *= invLenSq;
-                */
-
-                ca = pa.z + 0.5f;
-
-                for (i = (int) (currentVertex * 3);
-                     i < (currentVertex + 6) * 3;
-                     i += 3) {
-                    result->normalArray[i] = (GLfixed) FIXED(n.x);
-                    result->normalArray[i + 1] = (GLfixed) FIXED(n.y);
-                    result->normalArray[i + 2] = (GLfixed) FIXED(n.z);
-                }
-                for (i = (int) (currentVertex * 4);
-                     i < (currentVertex + 6) * 4;
-                     i += 4) {
-                    int b, color[3];
-                    for (b = 0; b < 3; ++b) {
-                        color[b] = (int) (ca * baseColor[b] * 255);
-                        if (color[b] > 255) color[b] = 255;
-                    }
-                    result->colorArray[i] = (GLubyte) color[0];
-                    result->colorArray[i + 1] = (GLubyte) color[1];
-                    result->colorArray[i + 2] = (GLubyte) color[2];
-                    result->colorArray[i + 3] = 0;
-                }
-                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pa.x);
-                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pa.y);
-                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pa.z);
-                ++currentVertex;
-                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pb.x);
-                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pb.y);
-                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pb.z);
-                ++currentVertex;
-                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pd.x);
-                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pd.y);
-                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pd.z);
-                ++currentVertex;
-                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pb.x);
-                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pb.y);
-                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pb.z);
-                ++currentVertex;
-                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pc.x);
-                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pc.y);
-                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pc.z);
-                ++currentVertex;
-                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pd.x);
-                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pd.y);
-                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pd.z);
-                ++currentVertex;
-            } // r0 && r1 && r2 && r3
-            ++currentQuad;
-        } // latitude
-    } // longitude
-
-    // Set number of vertices in object to the actual amount created.
-    result->count = (GLsizei) currentVertex;
-
-    return result;
-}
+//static GLOBJECT *createSuperShape(const float *params) {
+//    const int resol1 = (int) params[SUPERSHAPE_PARAMS - 3];
+//    const int resol2 = (int) params[SUPERSHAPE_PARAMS - 2];
+//    // latitude 0 to pi/2 for no mirrored bottom
+//    // (latitudeBegin==0 for -pi/2 to pi/2 originally)
+//    const int latitudeBegin = resol2 / 4;
+//    const int latitudeEnd = resol2 / 2;    // non-inclusive
+//    const int longitudeCount = resol1;
+//    const int latitudeCount = latitudeEnd - latitudeBegin;
+//    const long triangleCount = longitudeCount * latitudeCount * 2;
+//    const long vertices = triangleCount * 3;
+//    GLOBJECT *result;
+//    float baseColor[3];
+//    int a, longitude, latitude;
+//    long currentVertex, currentQuad;
+//
+//    result = newGLObject(vertices, 3, 1);
+//    if (result == NULL)
+//        return NULL;
+//
+//    for (a = 0; a < 3; ++a)
+//        baseColor[a] = ((randomUInt() % 155) + 100) / 255.f;
+//
+//    currentQuad = 0;
+//    currentVertex = 0;
+//
+//    // longitude -pi to pi
+//    for (longitude = 0; longitude < longitudeCount; ++longitude) {
+//
+//        // latitude 0 to pi/2
+//        for (latitude = latitudeBegin; latitude < latitudeEnd; ++latitude) {
+//            float t1 = -PI + longitude * 2 * PI / resol1;
+//            float t2 = -PI + (longitude + 1) * 2 * PI / resol1;
+//            float p1 = -PI / 2 + latitude * 2 * PI / resol2;
+//            float p2 = -PI / 2 + (latitude + 1) * 2 * PI / resol2;
+//            float r0, r1, r2, r3;
+//
+//            r0 = ssFunc(t1, params);
+//            r1 = ssFunc(p1, &params[6]);
+//            r2 = ssFunc(t2, params);
+//            r3 = ssFunc(p2, &params[6]);
+//
+//            if (r0 != 0 && r1 != 0 && r2 != 0 && r3 != 0) {
+//                VECTOR3 pa, pb, pc, pd;
+//                VECTOR3 v1, v2, n;
+//                float ca;
+//                int i;
+//                //float lenSq, invLenSq;
+//
+//                superShapeMap(&pa, r0, r1, t1, p1);
+//                superShapeMap(&pb, r2, r1, t2, p1);
+//                superShapeMap(&pc, r2, r3, t2, p2);
+//                superShapeMap(&pd, r0, r3, t1, p2);
+//
+//                // kludge to set lower edge of the object to fixed level
+//                if (latitude == latitudeBegin + 1)
+//                    pa.z = pb.z = 0;
+//
+//                vector3Sub(&v1, &pb, &pa);
+//                vector3Sub(&v2, &pd, &pa);
+//
+//                // Calculate normal with cross product.
+//                /*   i    j    k      i    j
+//                 * v1.x v1.y v1.z | v1.x v1.y
+//                 * v2.x v2.y v2.z | v2.x v2.y
+//                 */
+//
+//                n.x = v1.y * v2.z - v1.z * v2.y;
+//                n.y = v1.z * v2.x - v1.x * v2.z;
+//                n.z = v1.x * v2.y - v1.y * v2.x;
+//
+//                /* Pre-normalization of the normals is disabled here because
+//                 * they will be normalized anyway later due to automatic
+//                 * normalization (GL_NORMALIZE). It is enabled because the
+//                 * objects are scaled with glScale.
+//                 */
+//                /*
+//                lenSq = n.x * n.x + n.y * n.y + n.z * n.z;
+//                invLenSq = (float)(1 / sqrt(lenSq));
+//                n.x *= invLenSq;
+//                n.y *= invLenSq;
+//                n.z *= invLenSq;
+//                */
+//
+//                ca = pa.z + 0.5f;
+//
+//                for (i = (int) (currentVertex * 3);
+//                     i < (currentVertex + 6) * 3;
+//                     i += 3) {
+//                    result->normalArray[i] = (GLfixed) FIXED(n.x);
+//                    result->normalArray[i + 1] = (GLfixed) FIXED(n.y);
+//                    result->normalArray[i + 2] = (GLfixed) FIXED(n.z);
+//                }
+//                for (i = (int) (currentVertex * 4);
+//                     i < (currentVertex + 6) * 4;
+//                     i += 4) {
+//                    int b, color[3];
+//                    for (b = 0; b < 3; ++b) {
+//                        color[b] = (int) (ca * baseColor[b] * 255);
+//                        if (color[b] > 255) color[b] = 255;
+//                    }
+//                    result->colorArray[i] = (GLubyte) color[0];
+//                    result->colorArray[i + 1] = (GLubyte) color[1];
+//                    result->colorArray[i + 2] = (GLubyte) color[2];
+//                    result->colorArray[i + 3] = 0;
+//                }
+//                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pa.x);
+//                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pa.y);
+//                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pa.z);
+//                ++currentVertex;
+//                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pb.x);
+//                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pb.y);
+//                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pb.z);
+//                ++currentVertex;
+//                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pd.x);
+//                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pd.y);
+//                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pd.z);
+//                ++currentVertex;
+//                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pb.x);
+//                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pb.y);
+//                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pb.z);
+//                ++currentVertex;
+//                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pc.x);
+//                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pc.y);
+//                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pc.z);
+//                ++currentVertex;
+//                result->vertexArray[currentVertex * 3] = (GLfixed) FIXED(pd.x);
+//                result->vertexArray[currentVertex * 3 + 1] = (GLfixed) FIXED(pd.y);
+//                result->vertexArray[currentVertex * 3 + 2] = (GLfixed) FIXED(pd.z);
+//                ++currentVertex;
+//            } // r0 && r1 && r2 && r3
+//            ++currentQuad;
+//        } // latitude
+//    } // longitude
+//
+//    // Set number of vertices in object to the actual amount created.
+//    result->count = (GLsizei) currentVertex;
+//
+//    return result;
+//}
 
 static void assignVertex(int pi, int m, GLOBJECT *result, long p[][3]) {
     int i;
     GLubyte color;
+    GLubyte c;
     for (i = 0; i < 3; i++) {
         __android_log_print(ANDROID_LOG_DEBUG, "vf", "vertex[%d] = %d", m * 3 + i,
                             (int) p[pi - 1][i]);
         result->vertexArray[m * 3 + i] = (GLfixed) p[pi - 1][i];
 
         int j;
+        color = (GLubyte) ((randomUInt() & 0x5f) + 81);
         for (j = 0; j < 4; j++) {
-            color = (GLubyte) (j == 3 ? 0 : (GLubyte) ((randomUInt() & 0x5f) + 10 * m + j));
-            result->colorArray[(m * 3 + i) * 4 + j] = color;
-//            __android_log_print(ANDROID_LOG_DEBUG, "vf",
-//                                "color[%d] = %d", (m * 3 + i) * 4 + j, color);
+            c = (GLubyte) (j == 3 ? 0 : color);
+            result->colorArray[(m * 3 + i) * 4 + j] = c;
+            __android_log_print(ANDROID_LOG_DEBUG, "vf",
+                                "color[%d] = %d", (m * 3 + i) * 4 + j, c);
         }
     }
 }
@@ -484,8 +486,8 @@ static GLOBJECT *createBox(long x, long y, long z, long w, long l, long h) {
 
 static GLOBJECT *createGroundPlane() {
     const int scale = 1;
-    const int yBegin = -3, yEnd = 3;    // ends are non-inclusive
-    const int xBegin = -3, xEnd = 3;
+    const int yBegin = -5, yEnd = 5;    // ends are non-inclusive
+    const int xBegin = -5, xEnd = 5;
     const long triangleCount = (yEnd - yBegin) * (xEnd - xBegin) * 2;
     const long vertices = triangleCount * 3;
     GLOBJECT *result;
@@ -561,55 +563,90 @@ static void drawBox(int i) {
 }
 
 
-static void drawFadeQuad() {
-    static const GLfixed quadVertices[] = {
-            -0x10000, -0x10000,
-            0x10000, -0x10000,
-            -0x10000, 0x10000,
-            0x10000, -0x10000,
-            0x10000, 0x10000,
-            -0x10000, 0x10000
+//static void drawFadeQuad() {
+//    static const GLfixed quadVertices[] = {
+//            -0x10000, -0x10000,
+//            0x10000, -0x10000,
+//            -0x10000, 0x10000,
+//            0x10000, -0x10000,
+//            0x10000, 0x10000,
+//            -0x10000, 0x10000
+//    };
+//
+//    const int beginFade = (const int) (sTick - sCurrentCamTrackStartTick);
+//    const int endFade = (const int) (sNextCamTrackStartTick - sTick);
+//    const int minFade = beginFade < endFade ? beginFade : endFade;
+//
+//    if (minFade < 1024) {
+//        const GLfixed fadeColor = minFade << 6;
+//        glColor4x(fadeColor, fadeColor, fadeColor, 0);
+//
+//        glDisable(GL_DEPTH_TEST);
+//        glEnable(GL_BLEND);
+//        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+//        glDisable(GL_LIGHTING);
+//
+//        glMatrixMode(GL_MODELVIEW);
+//        glLoadIdentity();
+//
+//        glMatrixMode(GL_PROJECTION);
+//        glLoadIdentity();
+//
+//        glDisableClientState(GL_COLOR_ARRAY);
+//        glDisableClientState(GL_NORMAL_ARRAY);
+//        glVertexPointer(2, GL_FIXED, 0, quadVertices);
+//        glDrawArrays(GL_TRIANGLES, 0, 6);
+//
+//        glEnableClientState(GL_COLOR_ARRAY);
+//
+//        glMatrixMode(GL_MODELVIEW);
+//
+//        glEnable(GL_LIGHTING);
+//        glDisable(GL_BLEND);
+//        glEnable(GL_DEPTH_TEST);
+//    }
+//}
+
+static void paintGL() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//    glLoadIdentity();
+
+//    glTranslatef(0, (GLfloat) -0.5, (GLfloat) -1.0);
+
+//    int length = 5;
+    GLfloat object[] = {
+            2.0, 0.0, 0.0,
+            0, 2.0, 0.0,
+            0.0, 0.0, 2.0
     };
 
-    const int beginFade = (const int) (sTick - sCurrentCamTrackStartTick);
-    const int endFade = (const int) (sNextCamTrackStartTick - sTick);
-    const int minFade = beginFade < endFade ? beginFade : endFade;
+//    GLfloat colors[] = {
+//            0.0, 1.0, 0.0,
+//            0.0, 1.0, 0.0,
+//            0.0, 1.0, 0.0
+//    };
 
-    if (minFade < 1024) {
-        const GLfixed fadeColor = minFade << 6;
-        glColor4x(fadeColor, fadeColor, fadeColor, 0);
 
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-        glDisable(GL_LIGHTING);
+    glEnableClientState(GL_VERTEX_ARRAY);
+//    glEnableClientState(GL_COLOR_ARRAY);
 
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
+    glVertexPointer(3, GL_FLOAT, 0, object);
+//    glColorPointer(3, GL_FLOAT, 0, colors);
 
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        glDisableClientState(GL_COLOR_ARRAY);
-        glDisableClientState(GL_NORMAL_ARRAY);
-        glVertexPointer(2, GL_FIXED, 0, quadVertices);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableClientState(GL_VERTEX_ARRAY);
+//    glDisableClientState(GL_COLOR_ARRAY);
 
-        glEnableClientState(GL_COLOR_ARRAY);
+    glColor4f(0.0, 1.0, 0.0, 0.5);
 
-        glMatrixMode(GL_MODELVIEW);
+    glFlush();
 
-        glEnable(GL_LIGHTING);
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
-    }
 }
-
 
 // Called from the app framework.
 void appInit() {
-    int a;
-
     glEnable(GL_NORMALIZE);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -625,17 +662,18 @@ void appInit() {
 
     seedRandom(15);
 
-    for (a = 0; a < SUPERSHAPE_COUNT; ++a) {
-        sSuperShapeObjects[a] = createSuperShape(sSuperShapeParams[a]);
-        assert(sSuperShapeObjects[a] != NULL);
-    }
+//    int a;
+//    for (a = 0; a < SUPERSHAPE_COUNT; ++a) {
+//        sSuperShapeObjects[a] = createSuperShape(sSuperShapeParams[a]);
+//        assert(sSuperShapeObjects[a] != NULL);
+//    }
 
     sGroundPlane = createGroundPlane();
     assert(sGroundPlane != NULL);
 
     int i;
     for (i = 0; i < NUMBOXES; i++) {
-        sBoxes[i] = createBox(10 * i, i, i, 10, 20, 10);
+        sBoxes[i] = createBox(i, i, i, 2, 2, 2);
         assert(sBoxes[i] != NULL);
     }
 }
@@ -842,49 +880,51 @@ static void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
 }
 
 
-static void camTrack() {
-    float lerp[5];
-    float eX, eY, eZ, cX, cY, cZ;
-    float trackPos;
-    CAMTRACK *cam;
-    long currentCamTick;
-    int a;
-
-    sCurrentCamTrack = 6;
-
-    if (sNextCamTrackStartTick <= sTick) {
-//        ++sCurrentCamTrack;
-        sCurrentCamTrackStartTick = sNextCamTrackStartTick;
-    }
-    sNextCamTrackStartTick = sCurrentCamTrackStartTick +
-                             sCamTracks[sCurrentCamTrack].len * CAMTRACK_LEN;
-
-    cam = &sCamTracks[sCurrentCamTrack];
-    currentCamTick = sTick - sCurrentCamTrackStartTick;
-    trackPos = (float) currentCamTick / (CAMTRACK_LEN * cam->len);
-
-    for (a = 0; a < 5; ++a)
-        lerp[a] = (cam->src[a] + cam->dest[a] * trackPos) * 0.01f;
-
-    if (cam->dist) {
-        float dist = cam->dist * 0.1f;
-        cX = lerp[0];
-        cY = lerp[1];
-        cZ = lerp[2];
-        eX = cX - (float) cos(lerp[3]) * dist;
-        eY = cY - (float) sin(lerp[3]) * dist;
-        eZ = cZ - lerp[4];
-    }
-    else {
-        eX = lerp[0];
-        eY = lerp[1];
-        eZ = lerp[2];
-        cX = eX + (float) cos(lerp[3]);
-        cY = eY + (float) sin(lerp[3]);
-        cZ = eZ + lerp[4];
-    }
-    gluLookAt(eX, eY, eZ, cX, cY, cZ, 0, 0, 1);
-}
+//static void camTrack() {
+//    float lerp[5];
+//    float eX, eY, eZ, cX, cY, cZ;
+//    float trackPos;
+//    CAMTRACK *cam;
+//    long currentCamTick;
+//    int a;
+//
+//    sCurrentCamTrack = 6;
+//
+//    if (sNextCamTrackStartTick <= sTick) {
+////        ++sCurrentCamTrack;
+//        sCurrentCamTrackStartTick = sNextCamTrackStartTick;
+//    }
+//    sNextCamTrackStartTick = sCurrentCamTrackStartTick +
+//                             sCamTracks[sCurrentCamTrack].len * CAMTRACK_LEN;
+//
+//    cam = &sCamTracks[sCurrentCamTrack];
+//    currentCamTick = sTick - sCurrentCamTrackStartTick;
+//    trackPos = (float) currentCamTick / (CAMTRACK_LEN * cam->len);
+//
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "trackPos %f", trackPos);
+//
+//    for (a = 0; a < 5; ++a)
+//        lerp[a] = (cam->src[a] + cam->dest[a] * trackPos) * 0.01f;
+//
+//    if (cam->dist) {
+//        float dist = cam->dist * 0.1f;
+//        cX = lerp[0];
+//        cY = lerp[1];
+//        cZ = lerp[2];
+//        eX = cX - (float) cos(lerp[3]) * dist;
+//        eY = cY - (float) sin(lerp[3]) * dist;
+//        eZ = cZ - lerp[4];
+//    }
+//    else {
+//        eX = lerp[0];
+//        eY = lerp[1];
+//        eZ = lerp[2];
+//        cX = eX + (float) cos(lerp[3]);
+//        cY = eY + (float) sin(lerp[3]);
+//        cZ = eZ + lerp[4];
+//    }
+//    gluLookAt(eX, eY, eZ, cX, cY, cZ, 0, 0, 1);
+//}
 
 
 // Called from the app framework.
@@ -910,15 +950,16 @@ void appRender(long tick, int width, int height) {
     prepareFrame(width, height);
 
     // Update the camera position and set the lookat.
-    camTrack();
+//    camTrack();
+    gluLookAt(15, 15, 15, 0, 0, 0, 0, 0, 1);
 
     // Configure environment.
     configureLightAndMaterial();
 
     // Draw the reflection by drawing models with negated Z-axis.
-    glPushMatrix();
+//    glPushMatrix();
 //    drawModels(-1);
-    glPopMatrix();
+//    glPopMatrix();
 
     // Blend the ground plane to the window.
     drawGroundPlane();
@@ -933,6 +974,8 @@ void appRender(long tick, int width, int height) {
 //    drawModels(1.0);
 
     // Draw fade quad over whole window (when changing cameras).
-    drawFadeQuad();
+//    drawFadeQuad();
+
+    paintGL();
 
 }
