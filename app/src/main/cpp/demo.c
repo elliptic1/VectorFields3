@@ -44,9 +44,9 @@
 
 static unsigned long sRandomSeed = 0;
 
-static void seedRandom(unsigned long seed) {
-    sRandomSeed = seed;
-}
+//static void seedRandom(unsigned long seed) {
+//    sRandomSeed = seed;
+//}
 
 static unsigned long randomUInt() {
     sRandomSeed = sRandomSeed * 0x343fd + 0x269ec3;
@@ -55,11 +55,11 @@ static unsigned long randomUInt() {
 
 
 // Capped conversion from float to fixed.
-static long floatToFixed(float value) {
-    if (value < -32768) value = -32768;
-    if (value > 32767) value = 32767;
-    return (long) (value * 65536);
-}
+//static long floatToFixed(float value) {
+//    if (value < -32768) value = -32768;
+//    if (value > 32767) value = 32767;
+//    return (long) (value * 65536);
+//}
 
 #define FIXED(value) floatToFixed(value)
 
@@ -87,15 +87,40 @@ typedef struct {
 static long sStartTick = 0;
 static long sTick = 0;
 
-static GLOBJECT *sSuperShapeObjects[SUPERSHAPE_COUNT] = {NULL};
-static GLOBJECT *sGroundPlane = NULL;
-//static GLOBJECT *sBoxes[NUMBOXES];
+static GLOBJECT *sBoxes[NUMBOXES];
 
 
 typedef struct {
     float x, y, z;
 } VECTOR3;
 
+
+static void vector3Sub(VECTOR3 *dest, VECTOR3 *v1, VECTOR3 *v2) {
+    dest->x = v1->x - v2->x;
+    dest->y = v1->y - v2->y;
+    dest->z = v1->z - v2->z;
+}
+
+
+static void assignVertex(int pi, int m, GLOBJECT *result, long p[][3]) {
+    int i;
+    GLubyte color;
+    GLubyte c;
+    for (i = 0; i < 3; i++) {
+        __android_log_print(ANDROID_LOG_DEBUG, "vf", "vertex[%d] = %d", m * 3 + i,
+                            (int) p[pi - 1][i]);
+        result->vertexArray[m * 3 + i] = (GLfixed) p[pi - 1][i];
+
+        int j;
+        color = (GLubyte) ((randomUInt() & 0x5f) + 81);
+        for (j = 0; j < 4; j++) {
+            c = (GLubyte) (j == 3 ? 0 : color);
+            result->colorArray[(m * 3 + i) * 4 + j] = c;
+            __android_log_print(ANDROID_LOG_DEBUG, "vf",
+                                "color[%d] = %d", (m * 3 + i) * 4 + j, c);
+        }
+    }
+}
 
 static void freeGLObject(GLOBJECT *object) {
     if (object == NULL)
@@ -106,7 +131,6 @@ static void freeGLObject(GLOBJECT *object) {
     free(object);
 }
 
-
 static GLOBJECT *newGLObject(long vertices, int vertexComponents,
                              int useNormalArray) {
     GLOBJECT *result;
@@ -115,12 +139,10 @@ static GLOBJECT *newGLObject(long vertices, int vertexComponents,
         return NULL;
     result->count = (GLsizei) vertices;
     result->vertexComponents = vertexComponents;
-    result->vertexArray = (GLfixed *) malloc(vertices * vertexComponents *
-                                             sizeof(GLfixed));
+    result->vertexArray = (GLfixed *) malloc(vertices * vertexComponents * sizeof(GLfixed));
     result->colorArray = (GLubyte *) malloc(vertices * 4 * sizeof(GLubyte));
     if (useNormalArray) {
-        result->normalArray = (GLfixed *) malloc(vertices * 3 *
-                                                 sizeof(GLfixed));
+        result->normalArray = (GLfixed *) malloc(vertices * 3 * sizeof(GLfixed));
     }
     else
         result->normalArray = NULL;
@@ -132,7 +154,6 @@ static GLOBJECT *newGLObject(long vertices, int vertexComponents,
     }
     return result;
 }
-
 
 static void drawGLObject(GLOBJECT *object) {
     if (object == NULL) {
@@ -158,279 +179,160 @@ static void drawGLObject(GLOBJECT *object) {
     glDrawArrays(GL_TRIANGLES, 0, object->count);
 }
 
+static void assignNormal(int pi, GLOBJECT *result) {
+    int i;
+    __android_log_print(ANDROID_LOG_DEBUG, "vf", "assign normal to triangle %d", pi/3+1);
+    VECTOR3 r1, r2, r3, v1, v2, n;
 
-//static void vector3Sub(VECTOR3 *dest, VECTOR3 *v1, VECTOR3 *v2) {
-//    dest->x = v1->x - v2->x;
-//    dest->y = v1->y - v2->y;
-//    dest->z = v1->z - v2->z;
-//}
+    r1.x = result->vertexArray[pi * 3];
+    r1.y = result->vertexArray[pi * 3 + 1];
+    r1.z = result->vertexArray[pi * 3 + 2];
 
+    r2.x = result->vertexArray[pi * 3 + 3];
+    r2.y = result->vertexArray[pi * 3 + 4];
+    r2.z = result->vertexArray[pi * 3 + 5];
 
-//static void assignVertex(int pi, int m, GLOBJECT *result, long p[][3]) {
-//    int i;
-//    GLubyte color;
-//    GLubyte c;
-//    for (i = 0; i < 3; i++) {
-//        __android_log_print(ANDROID_LOG_DEBUG, "vf", "vertex[%d] = %d", m * 3 + i,
-//                            (int) p[pi - 1][i]);
-//        result->vertexArray[m * 3 + i] = (GLfixed) p[pi - 1][i];
-//
-//        int j;
-//        color = (GLubyte) ((randomUInt() & 0x5f) + 81);
-//        for (j = 0; j < 4; j++) {
-//            c = (GLubyte) (j == 3 ? 0 : color);
-//            result->colorArray[(m * 3 + i) * 4 + j] = c;
-//            __android_log_print(ANDROID_LOG_DEBUG, "vf",
-//                                "color[%d] = %d", (m * 3 + i) * 4 + j, c);
-//        }
-//    }
-//}
-//
-//static void assignNormal(int pi, GLOBJECT *result) {
-//    int i;
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "assign normal to triangle %d", pi/3+1);
-//    VECTOR3 r1, r2, r3, v1, v2, n;
-//
-//    r1.x = result->vertexArray[pi * 3];
-//    r1.y = result->vertexArray[pi * 3 + 1];
-//    r1.z = result->vertexArray[pi * 3 + 2];
-//
-//    r2.x = result->vertexArray[pi * 3 + 3];
-//    r2.y = result->vertexArray[pi * 3 + 4];
-//    r2.z = result->vertexArray[pi * 3 + 5];
-//
-//    r3.x = result->vertexArray[pi * 3 + 6];
-//    r3.y = result->vertexArray[pi * 3 + 7];
-//    r3.z = result->vertexArray[pi * 3 + 8];
-//
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r1 = (%2.2f, %2.2f, %2.2f)",
-////                        r1.x, r1.y, r1.z);
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r2 = (%2.2f, %2.2f, %2.2f)",
-////                        r2.x, r2.y, r2.z);
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r3 = (%2.2f, %2.2f, %2.2f)",
-////                        r3.x, r3.y, r3.z);
-//
-//    vector3Sub(&v1, &r2, &r1);
-//    vector3Sub(&v2, &r3, &r2);
-//
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "v1 = (%2.2f, %2.2f, %2.2f)",
-////                        v1.x, v1.y, v1.z);
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "v2 = (%2.2f, %2.2f, %2.2f)",
-////                        v2.x, v2.y, v2.z);
-////
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.x = %2.2f * %2.2f - %2.2f * %2.2f",
-////                        v1.y, v2.z, v1.z, v2.y);
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.y = %2.2f * %2.2f - %2.2f * %2.2f",
-////                        v1.z, v2.x, v1.x, v2.z);
-////    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.z = %2.2f * %2.2f - %2.2f * %2.2f",
-////                        v1.x, v2.y, v1.y, v2.x);
-//
-//    n.x = v1.y * v2.z - v1.z * v2.y;
-//    n.y = v1.z * v2.x - v1.x * v2.z;
-//    n.z = v1.x * v2.y - v1.y * v2.x;
-//
-//    float mag = (float) sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
-//    if (mag) {
-//        n.x /= mag;
-//        n.y /= mag;
-//        n.z /= mag;
-//    }
-//
-//    float nvector[3] = {n.x, n.y, n.z};
-//
-//    for (i = 0; i < 3; i++) {
-//        result->normalArray[pi * 3 + i] = (GLfixed) nvector[i];
-//    }
-//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "normal for triangle %d = (%2.2f, %2.2f, %2.2f)",
-//                        pi / 3 + 1, nvector[0], nvector[1], nvector[2]);
-//}
+    r3.x = result->vertexArray[pi * 3 + 6];
+    r3.y = result->vertexArray[pi * 3 + 7];
+    r3.z = result->vertexArray[pi * 3 + 8];
 
-//static GLOBJECT *createBox(long x, long y, long z, long w, long l, long h) {
-//    const long triangleCount = 12;
-//    const long vertices = triangleCount * 3;
-//    GLOBJECT *result;
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r1 = (%2.2f, %2.2f, %2.2f)",
+//                        r1.x, r1.y, r1.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r2 = (%2.2f, %2.2f, %2.2f)",
+//                        r2.x, r2.y, r2.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "r3 = (%2.2f, %2.2f, %2.2f)",
+//                        r3.x, r3.y, r3.z);
+
+    vector3Sub(&v1, &r2, &r1);
+    vector3Sub(&v2, &r3, &r2);
+
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "v1 = (%2.2f, %2.2f, %2.2f)",
+//                        v1.x, v1.y, v1.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "v2 = (%2.2f, %2.2f, %2.2f)",
+//                        v2.x, v2.y, v2.z);
 //
-//    long p[8][3] = {{x,     y,     z},
-//                    {x + w, y,     z},
-//                    {x + w, y + l, z},
-//                    {x,     y + l, z},
-//                    {x,     y,     z + h},
-//                    {x + w, y,     z + h},
-//                    {x + w, y + l, z + h},
-//                    {x,     y + l, z + h}};
-//
-//    result = newGLObject(vertices, 3, 1);
-//
-//    assignVertex(1, 0, result, p);
-//    assignVertex(2, 1, result, p);
-//    assignVertex(6, 2, result, p);
-//    assignNormal(0, result);
-//
-//    assignVertex(6, 3, result, p);
-//    assignVertex(5, 4, result, p);
-//    assignVertex(1, 5, result, p);
-//    assignNormal(3, result);
-//
-//    assignVertex(2, 6, result, p);
-//    assignVertex(3, 7, result, p);
-//    assignVertex(7, 8, result, p);
-//    assignNormal(6, result);
-//
-//    assignVertex(7, 9, result, p);
-//    assignVertex(6, 10, result, p);
-//    assignVertex(2, 11, result, p);
-//    assignNormal(9, result);
-//
-//    assignVertex(3, 12, result, p);
-//    assignVertex(4, 13, result, p);
-//    assignVertex(8, 14, result, p);
-//    assignNormal(12, result);
-//
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.x = %2.2f * %2.2f - %2.2f * %2.2f",
+//                        v1.y, v2.z, v1.z, v2.y);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.y = %2.2f * %2.2f - %2.2f * %2.2f",
+//                        v1.z, v2.x, v1.x, v2.z);
+//    __android_log_print(ANDROID_LOG_DEBUG, "vf", "n.z = %2.2f * %2.2f - %2.2f * %2.2f",
+//                        v1.x, v2.y, v1.y, v2.x);
+
+    n.x = v1.y * v2.z - v1.z * v2.y;
+    n.y = v1.z * v2.x - v1.x * v2.z;
+    n.z = v1.x * v2.y - v1.y * v2.x;
+
+    float mag = (float) sqrt(n.x * n.x + n.y * n.y + n.z * n.z);
+    if (mag) {
+        n.x /= mag;
+        n.y /= mag;
+        n.z /= mag;
+    }
+
+    float nvector[3] = {n.x, n.y, n.z};
+
+    for (i = 0; i < 3; i++) {
+        result->normalArray[pi * 3 + i] = (GLfixed) nvector[i];
+    }
+    __android_log_print(ANDROID_LOG_DEBUG, "vf", "normal for triangle %d = (%2.2f, %2.2f, %2.2f)",
+                        pi / 3 + 1, nvector[0], nvector[1], nvector[2]);
+}
+
+static GLOBJECT *createBox(long x, long y, long z, long w, long l, long h) {
+    const long triangleCount = 12;
+    const long vertices = triangleCount * 3;
+    GLOBJECT *result;
+
+    long p[8][3] = {{x,     y,     z},
+                    {x + w, y,     z},
+                    {x + w, y + l, z},
+                    {x,     y + l, z},
+                    {x,     y,     z + h},
+                    {x + w, y,     z + h},
+                    {x + w, y + l, z + h},
+                    {x,     y + l, z + h}};
+
+    result = newGLObject(vertices, 3, 1);
+
+    assignVertex(1, 0, result, p);
+    assignVertex(2, 1, result, p);
+    assignVertex(6, 2, result, p);
+    assignNormal(0, result);
+
+    assignVertex(6, 3, result, p);
+    assignVertex(5, 4, result, p);
+    assignVertex(1, 5, result, p);
+    assignNormal(3, result);
+
+    assignVertex(2, 6, result, p);
+    assignVertex(3, 7, result, p);
+    assignVertex(7, 8, result, p);
+    assignNormal(6, result);
+
+    assignVertex(7, 9, result, p);
+    assignVertex(6, 10, result, p);
+    assignVertex(2, 11, result, p);
+    assignNormal(9, result);
+
+    assignVertex(3, 12, result, p);
+    assignVertex(4, 13, result, p);
+    assignVertex(8, 14, result, p);
+    assignNormal(12, result);
+
 //    assignVertex(8, 15, result, p);
 //    assignVertex(7, 16, result, p);
 //    assignVertex(3, 17, result, p);
 //    assignNormal(15, result);
-//
-//    assignVertex(4, 18, result, p);
-//    assignVertex(1, 19, result, p);
-//    assignVertex(5, 20, result, p);
-//    assignNormal(18, result);
-//
-//    assignVertex(5, 21, result, p);
-//    assignVertex(8, 22, result, p);
-//    assignVertex(4, 23, result, p);
-//    assignNormal(21, result);
-//
-//    assignVertex(5, 24, result, p);
-//    assignVertex(6, 25, result, p);
-//    assignVertex(7, 26, result, p);
-//    assignNormal(24, result);
-//
+
+    assignVertex(4, 18, result, p);
+    assignVertex(1, 19, result, p);
+    assignVertex(5, 20, result, p);
+    assignNormal(18, result);
+
+    assignVertex(5, 21, result, p);
+    assignVertex(8, 22, result, p);
+    assignVertex(4, 23, result, p);
+    assignNormal(21, result);
+
+    assignVertex(5, 24, result, p);
+    assignVertex(6, 25, result, p);
+    assignVertex(7, 26, result, p);
+    assignNormal(24, result);
+
 //    assignVertex(7, 27, result, p);
 //    assignVertex(8, 28, result, p);
 //    assignVertex(5, 29, result, p);
 //    assignNormal(27, result);
-//
-//    assignVertex(2, 30, result, p);
-//    assignVertex(1, 31, result, p);
-//    assignVertex(4, 32, result, p);
-//    assignNormal(30, result);
-//
-//    assignVertex(4, 33, result, p);
-//    assignVertex(3, 34, result, p);
-//    assignVertex(2, 35, result, p);
-//    assignNormal(33, result);
-//
-//    return result;
-//
-//}
 
-static GLOBJECT *createGroundPlane() {
-    const int scale = 1;
-    const int yBegin = -2, yEnd = 2;    // ends are non-inclusive
-    const int xBegin = -2, xEnd = 2;
-    const long triangleCount = (yEnd - yBegin) * (xEnd - xBegin) * 2;
-    const long vertices = triangleCount * 3;
-    GLOBJECT *result;
-    int x, y;
-    long currentVertex, currentQuad;
+    assignVertex(2, 30, result, p);
+    assignVertex(1, 31, result, p);
+    assignVertex(4, 32, result, p);
+    assignNormal(30, result);
 
-    result = newGLObject(vertices, 2, 0);
-    if (result == NULL)
-        return NULL;
+    assignVertex(4, 33, result, p);
+    assignVertex(3, 34, result, p);
+    assignVertex(2, 35, result, p);
+    assignNormal(33, result);
 
-    currentQuad = 0;
-    currentVertex = 0;
-
-    for (y = yBegin; y < yEnd; ++y) {
-        for (x = xBegin; x < xEnd; ++x) {
-            GLubyte color;
-            int i, a;
-            color = (GLubyte) ((randomUInt() & 0x5f) + 81);  // 101 1111
-            for (i = (int) currentVertex * 4; i < (currentVertex + 6) * 4; i += 4) {
-                result->colorArray[i] = color;
-                result->colorArray[i + 1] = color;
-                result->colorArray[i + 2] = color;
-                result->colorArray[i + 3] = 0;
-            }
-
-            // Axis bits for quad triangles:
-            // x: 011100 (0x1c), y: 110001 (0x31)  (clockwise)
-            // x: 001110 (0x0e), y: 100011 (0x23)  (counter-clockwise)
-            for (a = 0; a < 6; ++a) {
-                const int xm = x + ((0x1c >> a) & 1);
-                const int ym = y + ((0x31 >> a) & 1);
-                const float m = (float) (cos(xm * 2) * sin(ym * 4) * 0.75f);
-                result->vertexArray[(int) currentVertex * 2] =
-                        (int) FIXED(xm * scale + m);
-                result->vertexArray[(int) currentVertex * 2 + 1] =
-                        (int) FIXED(ym * scale + m);
-                ++currentVertex;
-            }
-            ++currentQuad;
-        }
-    }
     return result;
+
 }
 
 
-static void drawGroundPlane() {
-    return;
+static void drawBox(int i) {
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ZERO, GL_SRC_COLOR);
     glDisable(GL_LIGHTING);
 
-    drawGLObject(sGroundPlane);
+    drawGLObject(sBoxes[i]);
 
     glEnable(GL_LIGHTING);
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
 }
 
-
-//static void drawBox(int i) {
-//    glDisable(GL_CULL_FACE);
-//    glDisable(GL_DEPTH_TEST);
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-//    glDisable(GL_LIGHTING);
-//
-//    drawGLObject(sBoxes[i]);
-//
-//    glEnable(GL_LIGHTING);
-//    glDisable(GL_BLEND);
-//    glEnable(GL_DEPTH_TEST);
-//}
-
-
-static void paintGL() {
-
-    GLfloat object[] = {
-            1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0
-    };
-
-    GLfloat colors[] = {
-            0.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            0.0, 1.0, 1.0
-    };
-
-    glVertexPointer(3, GL_FLOAT, 0, object);
-    glColorPointer(4, GL_FLOAT, 0, colors);
-
-    glEnable(GL_BLEND);
-    glLoadIdentity();
-    glTranslatef(0, 0, -5);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    glFlush();
-
-}
 
 // Called from the app framework.
 void appInit() {
@@ -447,25 +349,22 @@ void appInit() {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
-    seedRandom(15);
+//    seedRandom(15);
 
-    sGroundPlane = createGroundPlane();
-    assert(sGroundPlane != NULL);
-
-//    int i;
-//    for (i = 0; i < NUMBOXES; i++) {
-//        sBoxes[i] = createBox(i, i, i, 2, 2, 2);
-//        assert(sBoxes[i] != NULL);
-//    }
+    int i;
+    for (i = 0; i < NUMBOXES; i++) {
+        sBoxes[i] = createBox(i, i, i, 2, 2, 2);
+        assert(sBoxes[i] != NULL);
+    }
 }
 
 
 // Called from the app framework.
 void appDeinit() {
     int a;
-    for (a = 0; a < SUPERSHAPE_COUNT; ++a)
-        freeGLObject(sSuperShapeObjects[a]);
-    freeGLObject(sGroundPlane);
+    for (a = 0; a < NUMBOXES; a++) {
+        freeGLObject(sBoxes[a]);
+    }
 }
 
 
@@ -614,6 +513,30 @@ static void gluLookAt(GLfloat eyex, GLfloat eyey, GLfloat eyez,
 }
 
 
+static void paintGL() {
+
+    GLfloat object[] = {
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0
+    };
+
+    GLfloat colors[] = {
+            0.5, 1.0, 0.0, 0.5,
+            1.0, 1.0, 0.0, 1.0,
+            0.0, 1.0, 0.3, 1.0
+    };
+
+
+    glVertexPointer(3, GL_FLOAT, 0, object);
+    glColorPointer(4, GL_FLOAT, 0, colors);
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    glFlush();
+
+}
+
 // Called from the app framework.
 /* The tick is current time in milliseconds, width and height
  * are the image dimensions to be rendered.
@@ -642,20 +565,13 @@ void appRender(long tick, int width, int height) {
     // Configure environment.
     configureLightAndMaterial();
 
-    // Draw the reflection by drawing models with negated Z-axis.
-//    glPushMatrix();
-//    drawModels(-1);
-//    glPopMatrix();
-
-    // Blend the ground plane to the window.
-    drawGroundPlane();
+    paintGL();
 
     // Create the box.
-//    int i;
-//    for (i = 0; i < NUMBOXES; i++) {
-//        drawBox(i);
-//    }
-
-    paintGL();
+    int i;
+    for (i = 0; i < NUMBOXES; i++) {
+        __android_log_print(ANDROID_LOG_DEBUG, "vf", "drawing box");
+        drawBox(i);
+    }
 
 }
